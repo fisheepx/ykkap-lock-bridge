@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  doorlock-control:
+    image: python:3.13-slim
+    container_name: doorlock-control
+    user: root
+    environment:
+      - TZ=Asia/Tokyo
+      - MQTT_BROKER=YOUR_MQTT_BROKER
+      - MQTT_PORT=21883
+      - IPHONE_IP=YOUR_IPHONE_IP
+      - ZXTOUCH_PORT=6000
+      - IPHONE_SSH_PASSWORD=change-me
+      - LOGGING_LEVEL=INFO
+      - START_CHECK_STATUS_HOUR=7
+      - STOP_CHECK_STATUS_HOUR=22
+    volumes:
+      - /volume1/docker/door-bridge:/root
+    working_dir: /root
+    command: >
+      bash -c "
+      apt-get update && 
+      apt-get install -y sshpass && 
+      pip install --no-cache-dir paho-mqtt schedule zxtouch && 
+      python app_control_iphone.py
+      "
+    restart: on-failure:5
+    network_mode: bridge
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

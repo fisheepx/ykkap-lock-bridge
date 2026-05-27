@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  doorlock-control:
+    image: python:3.13-slim
+    container_name: doorlock-control
+    user: root
+    environment:
+      - TZ=Asia/Tokyo
+      - MQTT_BROKER=YOUR_MQTT_BROKER
+      - MQTT_PORT=21883
+      - ADB_DEVICE=ANDROID_DEVICE_SERIAL_OR_HOST:PORT
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - /volume1/docker/door-bridge:/root
+    devices:
+      - /dev/bus/usb/001/003:/dev/bus/usb/001/003
+    privileged: true
+    working_dir: /root
+    command: >
+      bash -c "
+      apt-get update && 
+      apt-get install -y android-tools-adb && 
+      pip install --no-cache-dir paho-mqtt Pillow schedule && 
+      python app_control_android.py
+      "
+    restart: on-failure:5
+    network_mode: bridge
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
